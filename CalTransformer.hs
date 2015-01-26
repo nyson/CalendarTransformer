@@ -9,31 +9,36 @@ import Text.ICalendar.Types
 import Data.Default
 import Data.List.Split
 import qualified Data.Text.Lazy as TL
+import Data.Text.Lazy.Encoding (decodeUtf8)
 import Data.Traversable
 import qualified Data.Map as Map
 
+test url = do
+  Right cal <- open url
+  putStrLn $ show $ calPrint cal
+
+testTrans url = do
+  Right cal <- open url
+  putStrLn $ show $ calPrint $ transform cal def
+
+calPrint :: VCalendar -> TL.Text
+calPrint cal = decodeUtf8 $ printICalendar def cal
 
 -- Downloads a iCalendar file by curl and applies transformation functions
 --  on it
-transform :: String -> Transformer -> IO [VCalendar]
-transform uri trans = do
-  parse <- open uri
-  case parse of
-    Left error -> do
-      putStrLn error
-      return []
-    Right cals -> do
-      return $ transformCalendars trans cals
+transform :: VCalendar -> Transformer -> VCalendar
+transform calendar trans = transformCalendar trans calendar
 
-open :: String -> IO (Either String [VCalendar])
+open :: String -> IO (Either String VCalendar)
 open uri = do
   req <- openLazyURI uri
-  case req of
+  case req of 
     Left error -> return $ Left error
     Right doc  -> do
+      -- not really sure why we need a FilePath here...
       case parseICalendar def "error.out" doc of
-        Left error    -> return $ Left error
-        Right (cal,_) -> return $ Right cal
+        Left error     -> return $ Left error
+        Right (cals,_) -> return $ Right $  head cals
 
 -- Transformer Declarations --------------------------------------------------
 data Transformer = T { eventT :: (VEvent -> VEvent)
