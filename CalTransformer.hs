@@ -71,14 +71,12 @@ transformJournal t = (journalT t)
 
 -- Transformer functions -----------------------------------------------------
 
-
-
--- findNth :: TL.Text -> String -> Int -> Maybe TL.Text
--- findNth text divider pos
---   = if length s > pos
---     then Just (s !! pos)
---     else Nothing
---   where s = splitOn divider text
+splitOnGetNth :: TL.Text -> String -> Int -> Maybe TL.Text
+splitOnGetNth text divider pos
+  = if length s > pos
+    then Just $ TL.pack (s !! pos)
+    else Nothing
+  where s = splitOn divider $ TL.unpack text
 
 
 
