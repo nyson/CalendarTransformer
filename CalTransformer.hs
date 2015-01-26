@@ -13,7 +13,8 @@ import Data.Traversable
 import qualified Data.Map as Map
 
 
--- Transforms a 
+-- Downloads a iCalendar file by curl and applies transformation functions
+--  on it
 transform :: String -> Transformer -> IO [VCalendar]
 transform uri trans = do
   parse <- open uri
@@ -71,25 +72,17 @@ transformJournal t = (journalT t)
 
 -- Transformer functions -----------------------------------------------------
 
-splitOnGetNth :: TL.Text -> String -> Int -> Maybe TL.Text
-splitOnGetNth text divider pos
-  = if length s > pos
-    then Just $ TL.pack (s !! pos)
-    else Nothing
-  where s = splitOn divider $ TL.unpack text
+-- Performs a string function on text and then transforms back to text
+textify :: (String -> String) -> TL.Text -> TL.Text
+textify f = TL.pack . f . TL.unpack
+
+-- Performs a separating string function on text and returns a list of texts
+textifyToList :: (String -> [String]) -> TL.Text -> [TL.Text]
+textifyToList f t = map TL.pack (f $ TL.unpack t)
+
+-- Performs a map with a string function on a list of texts
+textifyMap :: (String -> String) -> [TL.Text]-> [TL.Text]
+textifyMap f = map (TL.pack . f . TL.unpack)
 
 
 
-fifthToLocation ve = case veSummary ve of
-  Nothing -> ve
-  Just x  -> do
-    let e = splitOn "," $ (TL.unpack $ summaryValue x)
-    if length e >= 6
-      then ve {veSummary = Just $ x { summaryValue = TL.pack (e !! 0)},
-               veLocation = Just $ case veLocation ve of
-                 Nothing -> error "not supported"
-                 Just loc -> loc { locationValue = TL.pack (e !! 5)}
-              }
-      else ve 
-      
- 
