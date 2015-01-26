@@ -1,3 +1,5 @@
+{-# LANGUAGE OverloadedStrings #-}
+
 module CalTransformer where
 
 import Network.Curl.Download.Lazy
@@ -13,13 +15,7 @@ import Data.Text.Lazy.Encoding (decodeUtf8)
 import Data.Traversable
 import qualified Data.Map as Map
 
-test url = do
-  Right cal <- open url
-  putStrLn $ show $ calPrint cal
-
-testTrans url = do
-  Right cal <- open url
-  putStrLn $ show $ calPrint $ transform cal def
+-- Major functions -----------------------------------------------------------
 
 calPrint :: VCalendar -> TL.Text
 calPrint cal = decodeUtf8 $ printICalendar def cal
@@ -48,12 +44,15 @@ data Transformer = T { eventT :: (VEvent -> VEvent)
                      , todoF :: (VTodo -> Bool)
                        
                      , journalT :: (VJournal -> VJournal)
-                     , journalF :: (VJournal -> Bool)}
+                     , journalF :: (VJournal -> Bool)
+
+                     , calendarT :: (VCalendar -> VCalendar)}
 
 instance Default Transformer where
-  def = T { eventT   = id, eventF   = ft
-          , todoT    = id, todoF    = ft
-          , journalT = id, journalF = ft}
+  def = T { eventT    = id, eventF   = ft
+          , todoT     = id, todoF    = ft
+          , journalT  = id, journalF = ft
+          , calendarT = id}
     where ft = \_ -> True
 
 transformCalendars :: Transformer -> [VCalendar] -> [VCalendar]
@@ -61,10 +60,10 @@ transformCalendars t = map (transformCalendar t)
 
 transformCalendar :: Transformer -> VCalendar -> VCalendar
 transformCalendar t cal 
-  = cal { vcEvents   = mf eventT   eventF   vcEvents
-        , vcTodos    = mf todoT    todoF    vcTodos
-        , vcJournals = mf journalT journalF vcJournals
-        }
+  = (calendarT t) cal { vcEvents   = mf eventT   eventF   vcEvents
+                      , vcTodos    = mf todoT    todoF    vcTodos
+                      , vcJournals = mf journalT journalF vcJournals
+                      }
     where mf tf ff mp = Map.map (tf t) $ Map.filter (ff t) $ (mp cal)
 transformEvent :: Transformer -> VEvent -> VEvent
 transformEvent t = (eventT t)
