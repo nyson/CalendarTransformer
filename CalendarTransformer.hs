@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module CalTransformer where
+module CalendarTransformer where
 
 import Network.Curl.Download.Lazy
 
@@ -9,6 +9,7 @@ import Text.ICalendar.Printer
 import Text.ICalendar.Types
 
 import Data.Default
+import Data.Maybe
 import Data.List.Split
 import qualified Data.Text.Lazy as TL
 import Data.Text.Lazy.Encoding (decodeUtf8)
@@ -75,3 +76,14 @@ transformJournal :: Transformer -> VJournal -> VJournal
 transformJournal t = (journalT t)
 
 -- Transformer functions -----------------------------------------------------
+
+move5thField2Location :: VEvent -> VEvent
+move5thField2Location e = case veSummary e of
+  Nothing -> e
+  Just sum -> let splt = splitOn "," $ TL.unpack $ summaryValue sum
+                  loc  = fromJust $ veLocation e
+              in if length splt >= 6
+                 then e {veLocation = Just $ loc {locationValue = TL.pack (splt !! 5)}}
+                 else e
+              
+                 
