@@ -13,18 +13,17 @@ calendar t url = do
   req <- open url
   case req of
     Left error -> return $ Left $ TL.pack
-                  $ mconcat ["<h1>Error: ", error, "</h1>", "<br /> <h2>", url, "</h2>"]
+                  $ mconcat ["<h1>Error: ", error, "</h1>"]
     Right cal  -> return $ Right $ calPrint $ transform cal t
 
 main = scotty 3000 $ do
   get "/" $ do
     url <- (param "url") `rescue` (const next)
-    
     cal <- liftIO $ calendar transformer url
     
     case cal of
-      Left error -> html$ error
-      Right cal  -> text$ cal 
+      Left error -> html error
+      Right cal  -> text cal 
 
   get "/" $ do
     html $ mconcat ["<h1>Hello!</h1><p>To start, simply write an url in the "
