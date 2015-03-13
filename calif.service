@@ -5,3 +5,7 @@ Description=Calif Calendar Transformer
 Type=simple
 ExecStart=/home/nyson/.cabal/bin/calif
 PIDFile=/var/run/calif.pid
+
+[Install]
+WantedBy=multi-user.target
+
