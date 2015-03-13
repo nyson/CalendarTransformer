@@ -1,0 +1,7 @@
+[Unit]
+Description=Calif Calendar Transformer
+
+[Service]
+Type=simple
+ExecStart=/home/nyson/.cabal/bin/calif
+PIDFile=/var/run/calif.pid
